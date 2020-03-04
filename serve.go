@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 
 	logging "github.com/ipfs/go-log"
 	"github.com/pravahio/datalake-server/auth"
@@ -42,7 +43,7 @@ func handleGet(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		log.Error(err)
 		w.WriteHeader(501)
-		w.Write([]byte(err.Error()))
+		w.Write(jsonErrResponse(err.Error()))
 		return
 	} else {
 		log.Info("Served /get request")
@@ -109,11 +110,14 @@ func main() {
 
 	setHandlers()
 
-	host := "127.0.0.1"
-	port := "4000"
+	host := os.Getenv("LISTEN_HOST")
+	port := os.Getenv("LISTEN_PORT")
 
 	log.Infof("Listening on %s:%s", host, port)
-	http.ListenAndServe("127.0.0.1:4000", nil)
+	err = http.ListenAndServe(host+":"+port, nil)
+	if err != nil {
+		log.Error(err)
+	}
 }
 
 func setHandlers() {
