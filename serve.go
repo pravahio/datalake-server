@@ -45,10 +45,9 @@ func handleGet(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(501)
 		w.Write(jsonErrResponse(err.Error()))
 		return
-	} else {
-		log.Info("Served /get request")
-		w.Write([]byte(res))
 	}
+	log.Info("Served /get request")
+	w.Write([]byte(res))
 
 }
 
