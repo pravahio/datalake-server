@@ -25,6 +25,7 @@ var (
 	router = map[string]handlerFunc{
 		"/get":       handleGet,
 		"/aggregate": handleAgg,
+		"/latest":    handleLatest,
 	}
 	mdb *db.Database
 )
@@ -47,6 +48,27 @@ func handleGet(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	log.Info("Served /get request")
+	w.Write([]byte(res))
+
+}
+
+func handleLatest(w http.ResponseWriter, req *http.Request) {
+	log.Info("Handling a /latest request")
+	raw, err := preCheck(w, req, nil)
+	if err != nil {
+		w.Write(jsonErrResponse(err.Error()))
+		return
+	}
+
+	qp := db.CreateQueryParam(raw)
+	res, err := mdb.Latest(context.Background(), qp)
+	if err != nil {
+		log.Error(err)
+		w.WriteHeader(501)
+		w.Write(jsonErrResponse(err.Error()))
+		return
+	}
+	log.Info("Served /latest request")
 	w.Write([]byte(res))
 
 }

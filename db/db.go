@@ -92,6 +92,34 @@ func (db *Database) Get(ctx context.Context, query QueryParam) (string, error) {
 	return "[" + strings.Join(joint, ",") + "]", nil
 }
 
+func (db *Database) Latest(ctx context.Context, query QueryParam) (string, error) {
+
+	q, err := query.ParseToBSON()
+	if err != nil {
+		return "", err
+	}
+
+	colName, err := query.GetCollectionName()
+	if err != nil {
+		return "", err
+	}
+	collection := db.database.Collection(colName)
+
+	var decodedData bson.M
+	opts := options.FindOne().SetSort(bson.M{"$natural": -1})
+	err = collection.FindOne(ctx, q, opts).Decode(&decodedData)
+	if err != nil {
+		return "", err
+	}
+
+	c, err := bson.MarshalExtJSON(decodedData, false, true)
+	if err != nil {
+		return "", err
+	}
+
+	return string(c), nil
+}
+
 func (db *Database) Aggregate(ctx context.Context, query QueryParam, pipeline interface{}) (string, error) {
 
 	var bdoc []bson.D
