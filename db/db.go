@@ -94,11 +94,6 @@ func (db *Database) Get(ctx context.Context, query QueryParam) (string, error) {
 
 func (db *Database) Latest(ctx context.Context, query QueryParam) (string, error) {
 
-	q, err := query.ParseToBSON()
-	if err != nil {
-		return "", err
-	}
-
 	colName, err := query.GetCollectionName()
 	if err != nil {
 		return "", err
@@ -107,7 +102,7 @@ func (db *Database) Latest(ctx context.Context, query QueryParam) (string, error
 
 	var decodedData bson.M
 	opts := options.FindOne().SetSort(bson.M{"$natural": -1})
-	err = collection.FindOne(ctx, q, opts).Decode(&decodedData)
+	err = collection.FindOne(ctx, bson.M{}, opts).Decode(&decodedData)
 	if err != nil {
 		return "", err
 	}
