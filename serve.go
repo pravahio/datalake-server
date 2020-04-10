@@ -31,6 +31,8 @@ var (
 )
 
 func handleGet(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	log.Info("Handling a /get request")
 	raw, err := preCheck(w, req, nil)
 	if err != nil {
@@ -53,6 +55,8 @@ func handleGet(w http.ResponseWriter, req *http.Request) {
 }
 
 func handleLatest(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	log.Info("Handling a /latest request")
 	raw, err := preCheck(w, req, nil)
 	if err != nil {
@@ -74,6 +78,8 @@ func handleLatest(w http.ResponseWriter, req *http.Request) {
 }
 
 func handleAgg(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	raw, err := preCheck(w, req, []string{"pipeline"})
 	if err != nil {
 		w.Write(jsonErrResponse(err.Error()))
@@ -135,7 +141,12 @@ func main() {
 	port := os.Getenv("LISTEN_PORT")
 
 	log.Infof("Listening on %s:%s", host, port)
-	err = http.ListenAndServe(host+":"+port, nil)
+	err = http.ListenAndServeTLS(
+		host+":"+port,
+		os.Getenv("PRAVAH_SERVER_CERT_PATH"),
+		os.Getenv("PRAVAH_SERVER_KEY_PATH"),
+		nil,
+	)
 	if err != nil {
 		log.Error(err)
 	}
