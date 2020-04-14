@@ -100,6 +100,15 @@ func (db *Database) Latest(ctx context.Context, query QueryParam) (string, error
 	}
 	collection := db.database.Collection(colName)
 
+	cnt, ok := query.CustomQuery["count"]
+	if ok {
+		res, err := db.latestMoreThanOne(ctx, collection, int64(cnt.(float64)))
+		if err != nil {
+			return "", err
+		}
+		return res, nil
+	}
+
 	var decodedData bson.M
 	opts := options.FindOne().SetSort(bson.M{"$natural": -1})
 	err = collection.FindOne(ctx, bson.M{}, opts).Decode(&decodedData)
@@ -113,6 +122,35 @@ func (db *Database) Latest(ctx context.Context, query QueryParam) (string, error
 	}
 
 	return string(c), nil
+}
+
+func (db *Database) latestMoreThanOne(ctx context.Context, collection *mongo.Collection, cnt int64) (string, error) {
+	opts := options.Find()
+	opts.SetSort(bson.M{"$natural": -1})
+	opts.SetLimit(cnt)
+	cur, err := collection.Find(ctx, bson.D{}, opts)
+	if err != nil {
+		return "", err
+	}
+
+	defer cur.Close(ctx)
+
+	var joint []string
+	for cur.Next(ctx) {
+		var decodedData bson.M
+		err = cur.Decode(&decodedData)
+		if err != nil {
+			return "", err
+		}
+
+		c, err := bson.MarshalExtJSON(decodedData, false, true)
+		if err != nil {
+			return "", err
+		}
+		joint = append(joint, string(c))
+	}
+
+	return "[" + strings.Join(joint, ",") + "]", nil
 }
 
 func (db *Database) Aggregate(ctx context.Context, query QueryParam, pipeline interface{}) (string, error) {
